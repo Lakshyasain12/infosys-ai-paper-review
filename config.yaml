@@ -1,0 +1,12 @@
+# config.yaml - non-secret defaults
+search:
+  default_query: "machine learning"
+  year_from: 2018
+  year_to: 2024
+  max_results: 50
+  open_access_only: false
+
+paths:
+  raw_pdfs: "data/raw_pdfs"
+  meta_dir: "data/meta"
+  manifest_csv: "data/meta/manifest.csv"
