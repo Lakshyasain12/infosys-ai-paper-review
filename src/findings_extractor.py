@@ -19,7 +19,7 @@ RESULT_VERBS = [
     "odds ratio", "or ="
 ]
 
-# -------- SIMPLE REGEX SENTENCE SPLITTER --------
+# -------- SENTENCE SPLITTER --------
 def split_sentences(text):
     sentences = re.split(r'(?<=[.!?])\s+', text)
     return [s.strip() for s in sentences if s.strip()]
@@ -43,27 +43,37 @@ def is_key_finding(sentence):
 findings = {}
 
 for filename in os.listdir(SECTIONS_DIR):
-    if filename.endswith(".json"):
-        file_path = os.path.join(SECTIONS_DIR, filename)
+    if not filename.endswith(".json"):
+        continue
 
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+    file_path = os.path.join(SECTIONS_DIR, filename)
 
-        results_text = data.get("results", "")
-        conclusion_text = data.get("conclusion", "")
-        combined_text = f"{results_text} {conclusion_text}"
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-        sentences = split_sentences(combined_text)
+    # ✅ FALLBACK SECTION LOGIC (CRITICAL FIX)
+    if data.get("results"):
+        combined_text = data["results"]
+    elif data.get("conclusion"):
+        combined_text = data["conclusion"]
+    elif data.get("discussion"):
+        combined_text = data["discussion"]
+    else:
+        combined_text = data.get("abstract", "")
 
-        key_sentences = []
-        for sentence in sentences:
-            if is_key_finding(sentence):
-                key_sentences.append(sentence)
+    sentences = split_sentences(combined_text)
 
-        paper_name = filename.replace(".json", "")
-        findings[paper_name] = key_sentences
+    key_sentences = []
+    for sentence in sentences:
+        if is_key_finding(sentence):
+            key_sentences.append(sentence)
+
+    paper_name = filename.replace(".json", "")
+    findings[paper_name] = key_sentences
 
 # -------- SAVE OUTPUT --------
+os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
+
 with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
     json.dump(findings, f, indent=2)
 
